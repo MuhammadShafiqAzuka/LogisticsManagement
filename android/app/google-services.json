@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "874739674978",
+    "firebase_url": "https://aiproject-453501-default-rtdb.firebaseio.com",
+    "project_id": "aiproject-453501",
+    "storage_bucket": "aiproject-453501.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874739674978:android:6ff17cb36e2709c00d463b",
+        "android_client_info": {
+          "package_name": "com.example.logistic_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKnhLIb6gulIHBbtfL6Q2qH4As-DR0DMA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

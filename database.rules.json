@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "drivers": {
+      ".read": true,
+      "$driverId": {
+        ".write": false,
+        "location": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+    "jobs": {
+      ".read": true,
+      "$jobId": {
+        ".write": true
+      }
+    },
+    "settings": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
