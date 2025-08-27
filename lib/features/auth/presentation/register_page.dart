@@ -50,11 +50,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     try {
       final repo = ref.read(authRepositoryProvider);
 
-      // 1️⃣ Create Firebase user (auto-login)
+      // Create Firebase user
       final user = await repo.signUp(email, password);
       if (user == null) throw Exception("Failed to register user");
 
-      // 2️⃣ Add driver profile
+      // Add driver profile
       final driverRepo = ref.read(driverRepositoryProvider);
       await driverRepo.addDriver(Driver(
         id: user.uid,
@@ -64,20 +64,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         phoneNumber: phone,
       ));
 
-      // 3️⃣ Refresh the auth role provider so MyApp sees the new role
-      ref.invalidate(authRoleProvider);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DriverDashboard(driverId: user.uid),
+        ),
+      );
 
-      // 4️⃣ Optional: navigate immediately to driver dashboard
+      // Success: no need to set authState manually, authRoleProvider reacts automatically
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Registration successful! Redirecting...")),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DriverDashboard(driverId: user.uid),
-          ),
         );
       }
     } on FirebaseAuthException catch (e) {

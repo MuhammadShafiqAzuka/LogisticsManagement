@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../core/constants/const.dart';
@@ -11,7 +10,6 @@ import '../provider/driver_notifer.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:intl/intl.dart';
 import 'package:timeline_tile/timeline_tile.dart';
-
 import '../provider/job2_notifer.dart';
 
 class AllJobPage extends ConsumerStatefulWidget {
@@ -35,14 +33,10 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _scrollController = ScrollController();
-
     _scrollController.addListener(() {
       final offset = _scrollController.offset;
-      if (offset > lastOffset && _showFab) {
-        setState(() => _showFab = false);
-      } else if (offset < lastOffset && !_showFab) {
-        setState(() => _showFab = true);
-      }
+      if (offset > lastOffset && _showFab) setState(() => _showFab = false);
+      else if (offset < lastOffset && !_showFab) setState(() => _showFab = true);
       lastOffset = offset;
     });
   }
@@ -62,7 +56,12 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
     return Scaffold(
       body: driversAsync.when(
         data: (drivers) {
-          final vehicleTypes = drivers.map((d) => d.vehicle!.type).toSet().toList();
+          // ✅ Null-safe vehicle types
+          final vehicleTypes = drivers
+              .where((d) => d.vehicle != null)
+              .map((d) => d.vehicle!.type)
+              .toSet()
+              .toList();
 
           final activeJobs = jobs.where((j) => j.status == 'active').length;
           final pendingJobs = jobs.where((j) => j.status == 'pending').length;
@@ -83,9 +82,7 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
                   _buildTab("Finished", Icons.check_circle_outline, finishedJobs, Colors.green),
                 ],
               ),
-
               _buildFilters(vehicleTypes),
-
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -110,10 +107,7 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
           FloatingActionButton.extended(
             heroTag: 'import_job_fab',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ImportJobPage()),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportJobPage()));
             },
             icon: const Icon(Icons.upload_file),
             label: const Text("Import Jobs"),
@@ -135,14 +129,8 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
               right: -10,
               top: -5,
               child: badges.Badge(
-                badgeContent: Text(
-                  count.toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                badgeStyle: badges.BadgeStyle(
-                  badgeColor: badgeColor,
-                  padding: const EdgeInsets.all(4),
-                ),
+                badgeContent: Text(count.toString(), style: const TextStyle(color: Colors.white, fontSize: 10)),
+                badgeStyle: badges.BadgeStyle(badgeColor: badgeColor, padding: const EdgeInsets.all(4)),
               ),
             ),
         ],
@@ -158,12 +146,8 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
           DropdownButton<String>(
             value: selectedVehicleType,
             hint: const Text("Vehicle Type"),
-            items: ['All', ...vehicleTypes].map((type) {
-              return DropdownMenuItem(value: type, child: Text(type));
-            }).toList(),
-            onChanged: (val) {
-              setState(() => selectedVehicleType = val);
-            },
+            items: ['All', ...vehicleTypes].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+            onChanged: (val) => setState(() => selectedVehicleType = val),
           ),
         ],
       ),
@@ -185,14 +169,11 @@ class JobsTab extends ConsumerWidget {
     this.vehicleFilter,
   });
 
-
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final jobs = ref.watch(job2NotifierProvider); // ✅ use job2
+    final jobs = ref.watch(job2NotifierProvider);
     final driversAsync = ref.watch(driverNotifierProvider);
 
-    // Filter jobs
     final filteredJobs = jobs.where((job) {
       if (job.status != status) return false;
       if (driverId != null && job.driverId != driverId) return false;
@@ -206,36 +187,27 @@ class JobsTab extends ConsumerWidget {
           ),
           orElse: () => Driver.empty(),
         );
-        if (driver.vehicle!.type != vehicleFilter) return false;
+        if (driver.vehicle?.type != vehicleFilter) return false;
       }
 
       return true;
     }).toList();
 
-    if (filteredJobs.isEmpty) {
-      return const Center(child: Text("No jobs found"));
-    }
+    if (filteredJobs.isEmpty) return const Center(child: Text("No jobs found"));
 
-    // Sort by date
+    // Sort jobs by date
     filteredJobs.sort((a, b) => b.date.compareTo(a.date));
 
-    // Group jobs by time
     final Map<String, List<Job2>> groupedJobs = {};
     final now = DateTime.now();
     for (var job in filteredJobs) {
       final difference = now.difference(job.date).inDays;
       String group;
-      if (difference == 0) {
-        group = "Today";
-      } else if (difference == 1) {
-        group = "Yesterday";
-      } else if (difference < 7) {
-        group = "$difference days ago";
-      } else if (difference < 30) {
-        group = "A week ago";
-      } else {
-        group = DateFormat("MMMM dd, yyyy").format(job.date);
-      }
+      if (difference == 0) group = "Today";
+      else if (difference == 1) group = "Yesterday";
+      else if (difference < 7) group = "$difference days ago";
+      else if (difference < 30) group = "A week ago";
+      else group = DateFormat("MMMM dd, yyyy").format(job.date);
       groupedJobs.putIfAbsent(group, () => []).add(job);
     }
 
@@ -250,22 +222,18 @@ class JobsTab extends ConsumerWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    entry.key,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  child: Text(entry.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
                 ...entry.value.map((job) {
                   final driver = drivers.firstWhere(
                         (d) => d.id == job.driverId,
                     orElse: () => Driver.empty(),
                   );
+
                   final style = statusStyle(status);
 
                   return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 4,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: Padding(
@@ -273,30 +241,16 @@ class JobsTab extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// HEADER
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                "Order #${job.id}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              Chip(
-                                label: Text(
-                                  job.status.toUpperCase(),
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                backgroundColor: style['bg'],
-                              ),
+                              Text("Order #${job.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              Chip(label: Text(job.status.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: style['bg']),
                             ],
                           ),
-
                           const SizedBox(height: 12),
 
-                          /// PICKUP & DROPOFF (TIMELINE)
+                          /// PICKUP & DROPOFF
                           Column(
                             children: [
                               TimelineTile(
@@ -306,10 +260,7 @@ class JobsTab extends ConsumerWidget {
                                 indicatorStyle: IndicatorStyle(
                                   color: Colors.green,
                                   width: 20,
-                                  iconStyle: IconStyle(
-                                    iconData: Icons.store,
-                                    color: Colors.white,
-                                  ),
+                                  iconStyle: IconStyle(iconData: Icons.store, color: Colors.white),
                                 ),
                                 endChild: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -318,10 +269,7 @@ class JobsTab extends ConsumerWidget {
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                 ),
-                                beforeLineStyle: LineStyle(
-                                  color: Colors.grey.shade400,
-                                  thickness: 2,
-                                ),
+                                beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
                               ),
                               TimelineTile(
                                 isLast: true,
@@ -330,10 +278,7 @@ class JobsTab extends ConsumerWidget {
                                 indicatorStyle: IndicatorStyle(
                                   color: Colors.red,
                                   width: 20,
-                                  iconStyle: IconStyle(
-                                    iconData: Icons.location_on,
-                                    color: Colors.white,
-                                  ),
+                                  iconStyle: IconStyle(iconData: Icons.location_on, color: Colors.white),
                                 ),
                                 endChild: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -342,17 +287,14 @@ class JobsTab extends ConsumerWidget {
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                 ),
-                                beforeLineStyle: LineStyle(
-                                  color: Colors.grey.shade400,
-                                  thickness: 2,
-                                ),
+                                beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
                               ),
                             ],
                           ),
 
                           const Divider(height: 20),
 
-                          /// ORDER DETAILS
+                          // ORDER DETAILS
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -370,13 +312,11 @@ class JobsTab extends ConsumerWidget {
 
                           const Divider(height: 20),
 
-                          /// TIME & DRIVER
+                          // TIME & DRIVER
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                "Due: ${job.dueDate.toLocal().toString().split(' ')[0]}",
-                              ),
+                              Text("Due: ${job.dueDate.toLocal().toString().split(' ')[0]}"),
                               Text("Window: ${job.timeWindow}"),
                             ],
                           ),
@@ -388,9 +328,11 @@ class JobsTab extends ConsumerWidget {
                             children: [
                               /// Profile photo
                               CircleAvatar(
-                                backgroundImage: driver.profilePhoto!.startsWith('assets')
+                                backgroundImage: driver.profilePhoto != null
+                                    ? (driver.profilePhoto!.startsWith('assets')
                                     ? AssetImage(driver.profilePhoto!) as ImageProvider
-                                    : FileImage(File(driver.profilePhoto!)),
+                                    : FileImage(File(driver.profilePhoto!)))
+                                    : null,
                               ),
                               const SizedBox(width: 12),
 
@@ -399,35 +341,22 @@ class JobsTab extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      driver.email, // or a `driver.name` if you have one
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
+                                    Text(driver.email ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                     const SizedBox(height: 2),
                                     Text(
-                                      "${driver.vehicle!.name} (${driver.vehicle!.registrationNumber})",
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 14,
-                                      ),
+                                      driver.vehicle != null
+                                          ? "${driver.vehicle!.name} (${driver.vehicle!.registrationNumber})"
+                                          : "Vehicle: N/A",
+                                      style: const TextStyle(color: Colors.black54, fontSize: 14),
                                     ),
-                                    Text(
-                                      "Type: ${driver.vehicle!.type}",
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 13,
-                                      ),
-                                    ),
+                                    if (driver.vehicle != null)
+                                      Text("Type: ${driver.vehicle!.type}", style: const TextStyle(color: Colors.black54, fontSize: 13)),
                                   ],
                                 ),
                               ),
                             ],
                           ),
 
-                          // View Map
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -436,11 +365,7 @@ class JobsTab extends ConsumerWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => JobMapPage(
-                                        job: job,
-                                        showNavigation: false,
-                                        isAdmin: true,
-                                      ),
+                                      builder: (_) => JobMapPage(job: job, showNavigation: false, isAdmin: true),
                                     ),
                                   );
                                 },

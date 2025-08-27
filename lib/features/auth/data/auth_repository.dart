@@ -24,7 +24,7 @@ class AuthRepository {
     // Create user document in Firestore
     await _firestore.collection("users").doc(credential.user!.uid).set({
       "email": email,
-      "role": "driver", // default role
+      "role": "driver",
       "createdAt": FieldValue.serverTimestamp(),
     });
 
