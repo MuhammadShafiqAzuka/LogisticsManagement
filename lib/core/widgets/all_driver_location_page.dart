@@ -33,27 +33,31 @@ class _AllDriversLiveLocationPageState extends ConsumerState<AllDriversLiveLocat
   void _listenAllDrivers() {
     final notifier = ref.read(driverNotifierProvider.notifier);
 
-    _driversLocationSub = notifier.watchAllDriversLocations().listen((driversMap) {
-      final newMarkers = <MarkerId, Marker>{};
+    _driversLocationSub = notifier.watchAllDriversLocations().listen(
+          (driversMap) {
+        final newMarkers = <MarkerId, Marker>{};
 
-      driversMap.forEach((driverId, point) {
-        newMarkers[MarkerId(driverId)] = Marker(
-          markerId: MarkerId(driverId),
-          position: LatLng(point.latitude, point.longitude),
-          infoWindow: InfoWindow(title: "Driver: $driverId"),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        );
-      });
+        driversMap.forEach((driverId, point) {
+          newMarkers[MarkerId(driverId)] = Marker(
+            markerId: MarkerId(driverId),
+            position: LatLng(point.latitude, point.longitude),
+            infoWindow: InfoWindow(title: "Driver: $driverId"),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          );
+        });
 
-      setState(() {
-        _markers
-          ..clear()
-          ..addAll(newMarkers);
-      });
+        setState(() {
+          _markers
+            ..clear()
+            ..addAll(newMarkers);
+        });
 
-      // Fit all markers on the map
-      _fitAllMarkers();
-    });
+        _fitAllMarkers();
+      },
+      onError: (error) {
+        debugPrint("Failed to load driver locations: $error");
+      },
+    );
   }
 
   void _fitAllMarkers() {

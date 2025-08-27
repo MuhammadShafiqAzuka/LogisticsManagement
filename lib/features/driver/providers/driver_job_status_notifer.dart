@@ -1,15 +1,15 @@
 import 'dart:typed_data';
-
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/driver_job_status.dart';
-
-import 'package:firebase_database/firebase_database.dart';
 
 class JobStatusNotifier extends StateNotifier<Map<String, JobStatusUpdate>> {
   JobStatusNotifier() : super({});
 
-  final _db = FirebaseDatabase.instance.ref(); // Realtime DB reference
+  final CollectionReference jobsCollection =
+  FirebaseFirestore.instance.collection('jobs');
 
+  /// Update job status in Firestore
   Future<void> updateStatus(
       String jobId,
       String status, {
@@ -17,7 +17,7 @@ class JobStatusNotifier extends StateNotifier<Map<String, JobStatusUpdate>> {
         Uint8List? signatureBytes,
         String? reason,
       }) async {
-    // 1️⃣ Update local state (UI reacts instantly)
+    // 1️⃣ Update local state immediately
     state = {
       ...state,
       jobId: JobStatusUpdate(
@@ -30,33 +30,26 @@ class JobStatusNotifier extends StateNotifier<Map<String, JobStatusUpdate>> {
 
     // 2️⃣ Prepare proof data conditionally
     Map<String, dynamic> proofData = {};
-
     if (status == "finished") {
       proofData = {
-        "photo": proofPath,
-        "signature": signatureBytes != null
-            ? String.fromCharCodes(signatureBytes)
-            : null,
+        "proofPhoto": proofPath,
+        "proofSignature": signatureBytes != null ? String.fromCharCodes(signatureBytes) : null,
       };
     } else if (status == "pending" || status == "returned") {
       proofData = {
-        "reason": reason,
+        "proofReason": reason,
       };
     }
 
-    // 3️⃣ Final update object
+    // 3️⃣ Firestore update object
     final Map<String, dynamic> updateData = {
       "status": status,
-      "updatedAt": DateTime.now().millisecondsSinceEpoch,
-      "proof": {
-        "proofPhoto": proofPath,
-        "proofReason": reason,
-        "proofSignature": signatureBytes != null ? "signature path" : null,
-      }
+      "updatedAt": FieldValue.serverTimestamp(),
+      "proof": proofData,
     };
 
-    // 4️⃣ Push update to Realtime DB
-    await _db.child("jobs/$jobId").update(updateData);
+    // 4️⃣ Update Firestore
+    await jobsCollection.doc(jobId).update(updateData);
   }
 
   JobStatusUpdate? getStatus(String jobId) => state[jobId];
@@ -64,5 +57,4 @@ class JobStatusNotifier extends StateNotifier<Map<String, JobStatusUpdate>> {
 
 final jobStatusProvider =
 StateNotifierProvider<JobStatusNotifier, Map<String, JobStatusUpdate>>(
-      (ref) => JobStatusNotifier(),
-);
+        (ref) => JobStatusNotifier());

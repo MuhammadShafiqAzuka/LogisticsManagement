@@ -230,7 +230,7 @@ class MyJobsPage extends ConsumerWidget {
 
             const Divider(height: 20),
 
-            /// ORDER DETAILS
+            // ORDER DETAILS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -245,6 +245,24 @@ class MyJobsPage extends ConsumerWidget {
                 Text("Weight: ${job.weight} kg"),
               ],
             ),
+
+            const Divider(height: 20),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Storage Condition: ${job.stocks}"),
+              ],
+            ),
+            // TIME & DRIVER
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Due: ${job.dueDate.toLocal().toString().split(' ')[0]}"),
+                Text("Window: ${job.timeWindow}"),
+              ],
+            ),
+            const SizedBox(height: 6),
 
             const Divider(height: 20),
 
@@ -436,7 +454,7 @@ class MyJobsPage extends ConsumerWidget {
         break;
       case 'pending':
         icon = Icons.pending_actions;
-        color = Colors.orange;
+        color = Colors.blue;
         title = "Pending Job";
         break;
       case 'returned':

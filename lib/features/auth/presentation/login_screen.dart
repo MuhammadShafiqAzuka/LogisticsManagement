@@ -101,10 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.directions_bus, size: 60, color: Colors.blueAccent),
-                    const SizedBox(height: 10),
-                    const Text("Driver Login",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Text("DMS Login", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     TextField(
                       controller: emailController,

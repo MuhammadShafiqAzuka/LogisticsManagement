@@ -62,13 +62,17 @@ class _AllDriversPageState extends ConsumerState<AllDriversPage> {
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundImage: driver.profilePhoto!.startsWith('assets')
-                        ? AssetImage(driver.profilePhoto!) as ImageProvider
-                        : FileImage(File(driver.profilePhoto!)),
+                    backgroundImage: (driver.profilePhoto != null && driver.profilePhoto!.isNotEmpty)
+                        ? FileImage(File(driver.profilePhoto!))
+                        : const AssetImage('assets/default_driver.png'),
                   ),
                   title: Text(driver.email),
                   subtitle: Text(
-                      '${driver.vehicle!.name} • ${driver.vehicle!.registrationNumber}'),
+                    driver.vehicle != null
+                        ? "${driver.vehicle!.name} (${driver.vehicle!.registrationNumber})"
+                        : "Vehicle: Not register yet",
+                    style: const TextStyle(color: Colors.black54, fontSize: 14),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

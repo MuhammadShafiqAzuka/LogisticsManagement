@@ -312,6 +312,12 @@ class JobsTab extends ConsumerWidget {
 
                           const Divider(height: 20),
 
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Storage Condition: ${job.stocks}"),
+                            ],
+                          ),
                           // TIME & DRIVER
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -328,12 +334,11 @@ class JobsTab extends ConsumerWidget {
                             children: [
                               /// Profile photo
                               CircleAvatar(
-                                backgroundImage: driver.profilePhoto != null
-                                    ? (driver.profilePhoto!.startsWith('assets')
-                                    ? AssetImage(driver.profilePhoto!) as ImageProvider
-                                    : FileImage(File(driver.profilePhoto!)))
-                                    : null,
+                                backgroundImage: (driver.profilePhoto != null && driver.profilePhoto!.isNotEmpty)
+                                    ? FileImage(File(driver.profilePhoto!))
+                                    : const AssetImage('assets/default_driver.png'),
                               ),
+
                               const SizedBox(width: 12),
 
                               /// Driver details
@@ -341,12 +346,12 @@ class JobsTab extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(driver.email ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text(driver.email, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                     const SizedBox(height: 2),
                                     Text(
                                       driver.vehicle != null
                                           ? "${driver.vehicle!.name} (${driver.vehicle!.registrationNumber})"
-                                          : "Vehicle: N/A",
+                                          : "Vehicle: Not register yet",
                                       style: const TextStyle(color: Colors.black54, fontSize: 14),
                                     ),
                                     if (driver.vehicle != null)

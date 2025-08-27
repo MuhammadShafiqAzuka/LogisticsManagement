@@ -64,7 +64,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         phoneNumber: phone,
       ));
 
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => DriverDashboard(driverId: user.uid),

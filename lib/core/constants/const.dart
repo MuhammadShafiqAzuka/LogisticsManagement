@@ -144,3 +144,11 @@ DateTime parseExcelDate(String? raw) {
   // fallback if all fails
   return DateTime.now();
 }
+
+ImageProvider<Object> safeImageProvider(String? path, {String defaultAsset = 'assets/default_driver.png'}) {
+  if (path != null && path.isNotEmpty && File(path).existsSync()) {
+    return FileImage(File(path));
+  } else {
+    return AssetImage(defaultAsset);
+  }
+}

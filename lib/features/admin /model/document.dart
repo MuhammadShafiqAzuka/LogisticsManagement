@@ -1,13 +1,9 @@
 class Document {
-  final String licencePhoto;
-  final String icPhoto;
+  final String? licencePhoto;
+  final String? icPhoto;
 
-  Document({
-    required this.licencePhoto,
-    required this.icPhoto,
-  });
+  Document({this.licencePhoto, this.icPhoto});
 
-  /// Create a Document from a Map (Firestore)
   factory Document.fromMap(Map<String, dynamic> map) {
     return Document(
       licencePhoto: map['licencePhoto'] ?? '',
@@ -15,11 +11,10 @@ class Document {
     );
   }
 
-  /// Convert Document to Map (Firestore)
   Map<String, dynamic> toMap() {
-    return {
-      'licencePhoto': licencePhoto,
-      'icPhoto': icPhoto,
-    };
+    final map = <String, dynamic>{};
+    if (licencePhoto != null) map['licencePhoto'] = licencePhoto;
+    if (icPhoto != null) map['icPhoto'] = icPhoto;
+    return map;
   }
 }

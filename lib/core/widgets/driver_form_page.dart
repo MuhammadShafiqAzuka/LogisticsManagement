@@ -8,7 +8,6 @@ import '../../features/admin /model/driver.dart';
 import '../../features/admin /model/vehicle.dart';
 import '../../features/admin /provider/driver_notifer.dart';
 
-
 class DriverFormPage extends ConsumerStatefulWidget {
   final Driver? driver;
   const DriverFormPage({super.key, this.driver});
@@ -48,6 +47,15 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
     _licencePhotoPath = widget.driver?.document?.licencePhoto;
   }
 
+  /// Helper function: safely load image from path or default asset
+  ImageProvider<Object> safeImageProvider(String? path, {String defaultAsset = 'assets/default_driver.png'}) {
+    if (path != null && path.isNotEmpty && File(path).existsSync()) {
+      return FileImage(File(path));
+    } else {
+      return AssetImage(defaultAsset);
+    }
+  }
+
   Future<void> _pickImage(Function(String) onImagePicked) async {
     final granted = await checkAndRequestPermissions(isDriver: false);
     if (!granted) {
@@ -69,6 +77,7 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
     required String? currentPath,
     required Function(String) onPicked,
     bool isCircle = false,
+    String defaultAsset = 'assets/default_driver.png',
   }) {
     return GestureDetector(
       onTap: () => _pickImage(onPicked),
@@ -78,11 +87,7 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
           isCircle
               ? CircleAvatar(
             radius: 50,
-            backgroundImage: currentPath != null
-                ? (currentPath.startsWith('assets/')
-                ? AssetImage(currentPath) as ImageProvider
-                : FileImage(File(currentPath)))
-                : const AssetImage('assets/default_driver.png'),
+            backgroundImage: safeImageProvider(currentPath, defaultAsset: defaultAsset),
             child: Align(
               alignment: Alignment.bottomRight,
               child: Container(
@@ -102,14 +107,10 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
               color: Colors.grey[200],
               border: Border.all(color: Colors.grey.shade400),
               borderRadius: BorderRadius.circular(8),
-              image: currentPath != null
-                  ? DecorationImage(
-                image: currentPath.startsWith('assets/')
-                    ? AssetImage(currentPath) as ImageProvider
-                    : FileImage(File(currentPath)),
+              image: DecorationImage(
+                image: safeImageProvider(currentPath, defaultAsset: defaultAsset),
                 fit: BoxFit.cover,
-              )
-                  : null,
+              ),
             ),
             child: currentPath == null
                 ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
@@ -143,6 +144,7 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                   currentPath: _profilePhotoPath,
                   onPicked: (path) => _profilePhotoPath = path,
                   isCircle: true,
+                  defaultAsset: 'assets/default_driver.png',
                 ),
               ),
               const SizedBox(height: 20),
@@ -154,12 +156,14 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                     label: "IC Photo",
                     currentPath: _icPhotoPath,
                     onPicked: (path) => _icPhotoPath = path,
+                    defaultAsset: 'assets/ic_default.png',
                   ),
                   const SizedBox(height: 16),
                   _buildImagePicker(
                     label: "Licence Photo",
                     currentPath: _licencePhotoPath,
                     onPicked: (path) => _licencePhotoPath = path,
+                    defaultAsset: 'assets/licence_default.png',
                   ),
                 ],
               ),
@@ -176,7 +180,7 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(labelText: "Phone",  border: OutlineInputBorder()),
+                    decoration: const InputDecoration(labelText: "Phone", border: OutlineInputBorder()),
                     validator: (val) => val!.isEmpty ? "Enter phone" : null,
                   ),
                   const SizedBox(height: 12),
@@ -223,10 +227,8 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                     validator: (val) => val == null || val.isEmpty ? "Select vehicle type" : null,
                   ),
                   const SizedBox(height: 12),
-
                 ],
               ),
-
               const SizedBox(height: 24),
 
               /// Save Button
@@ -240,24 +242,31 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                     if (_formKey.currentState!.validate()) {
                       setState(() => isSaving = true);
 
+                      // Only create Document if at least one photo is picked
+                      Document? document;
+                      if (_licencePhotoPath != null || _icPhotoPath != null) {
+                        document = Document(
+                          licencePhoto: _licencePhotoPath,
+                          icPhoto: _icPhotoPath,
+                        );
+                      }
+
                       final newDriver = Driver(
                         id: widget.driver?.id ?? '-1',
                         icNumber: _icController.text,
                         email: _emailController.text,
                         passwordHash: widget.driver?.passwordHash ?? 'hashed_pw',
                         phoneNumber: _phoneController.text,
-                        profilePhoto: _profilePhotoPath ?? 'assets/images/driver_default.png',
+                        // Only save profilePhoto if user picked one
+                        profilePhoto: _profilePhotoPath,
                         vehicle: Vehicle(
                           name: _vehicleNameController.text,
                           registrationNumber: _vehicleRegController.text,
                           type: _vehicleTypeController.text,
                         ),
-                        document: Document(
-                          licencePhoto: _licencePhotoPath ?? 'assets/licence_default.png',
-                          icPhoto: _icPhotoPath ?? 'assets/ic_default.png',
-                        ),
-                        activeStocks: [],
-                        previousStocks: [],
+                        document: document,
+                        activeStocks: widget.driver?.activeStocks ?? [],
+                        previousStocks: widget.driver?.previousStocks ?? [],
                       );
 
                       final notifier = ref.read(driverNotifierProvider.notifier);
