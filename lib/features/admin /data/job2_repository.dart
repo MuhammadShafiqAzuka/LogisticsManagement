@@ -1,55 +1,49 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../model/job.dart';
 
 class Job2Repository {
-  final DatabaseReference db = FirebaseDatabase.instance.ref();
+  final CollectionReference jobsCollection = FirebaseFirestore.instance.collection('jobs');
+
+  /// ✅ Stream all jobs in real-time
   Stream<List<Job2>> watchAllJobs() {
-    return db
-        .child("jobs")
-        .onValue
-        .map((event) {
-      if (event.snapshot.value == null) return [];
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-      return data.entries.map((e) {
-        return Job2.fromMap(Map<String, dynamic>.from(e.value), e.key);
+    return jobsCollection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Job2.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
     });
   }
 
+  /// ✅ Create a job
   Future<void> createJob(Job2 job) async {
-    await db.child("jobs/${job.id}").set(job.toMap());
+    await jobsCollection.doc(job.id).set(job.toMap());
   }
 
+  /// ✅ Update a job
   Future<void> updateJob(Job2 job) async {
-    await db.child("jobs/${job.id}").update(job.toMap());
+    await jobsCollection.doc(job.id).update(job.toMap());
   }
 
+  /// ✅ Update only the job status
   Future<void> updateJobStatus(String jobId, String newStatus) async {
-    await db.child("jobs/$jobId").update({
-      "status": newStatus,
+    await jobsCollection.doc(jobId).update({
+      'status': newStatus,
     });
   }
 
+  /// ✅ Delete a job
   Future<void> deleteJob(String id) async {
-    await db.child("jobs/$id").remove();
+    await jobsCollection.doc(id).delete();
   }
 
-  /// ✅ Realtime stream of jobs for a driver
+  /// ✅ Stream jobs for a specific driver
   Stream<List<Job2>> watchDriverJobs(String driverId) {
-    return db
-        .child("jobs")
-        .orderByChild("driverId")
-        .equalTo(driverId)
-        .onValue
-        .map((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-
-      if (data == null) return [];
-
-      return data.entries.map((entry) {
-        final jobData = Map<String, dynamic>.from(entry.value);
-        return Job2.fromMap(jobData, entry.key); // ✅ use fromMap
+    return jobsCollection
+        .where('driverId', isEqualTo: driverId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Job2.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
     });
   }

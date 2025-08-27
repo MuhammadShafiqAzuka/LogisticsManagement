@@ -12,11 +12,17 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+
+  #State Management
   provider: ^6.1.5
-  http: ^1.4.0
-  shared_preferences: ^2.5.3
   flutter_riverpod: ^2.6.1
   hooks_riverpod: ^2.6.1
+
+  #Web Services
+  http: ^1.4.0
+  flutter_background_service: ^5.1.0
+
+  #UI Pubs
   syncfusion_flutter_charts: ^30.1.41
   syncfusion_flutter_signaturepad: ^30.2.5
   excel: ^4.0.6
@@ -33,11 +39,16 @@ dependencies:
   timeline_tile: ^2.0.0
   package_info_plus: ^8.0.3
   badges: ^3.1.2
-  firebase_core: ^3.10.1
-  firebase_database: ^11.3.10
   geolocator: ^14.0.2
-  flutter_background_service: ^5.1.0
   file_picker: ^10.3.2
+
+  #Databases
+  shared_preferences: ^2.5.3
+  firebase_core: ^4.0.0
+  firebase_database: ^12.0.0
+  cloud_firestore: ^6.0.0
+  firebase_auth: ^6.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

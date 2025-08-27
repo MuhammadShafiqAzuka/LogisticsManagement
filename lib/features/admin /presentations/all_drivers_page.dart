@@ -62,13 +62,13 @@ class _AllDriversPageState extends ConsumerState<AllDriversPage> {
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundImage: driver.profilePhoto.startsWith('assets')
-                        ? AssetImage(driver.profilePhoto) as ImageProvider
-                        : FileImage(File(driver.profilePhoto)),
+                    backgroundImage: driver.profilePhoto!.startsWith('assets')
+                        ? AssetImage(driver.profilePhoto!) as ImageProvider
+                        : FileImage(File(driver.profilePhoto!)),
                   ),
                   title: Text(driver.email),
                   subtitle: Text(
-                      '${driver.vehicle.name} • ${driver.vehicle.registrationNumber}'),
+                      '${driver.vehicle!.name} • ${driver.vehicle!.registrationNumber}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -103,21 +103,3 @@ class _AllDriversPageState extends ConsumerState<AllDriversPage> {
     );
   }
 }
-
-/*
-floatingActionButton: _showFab
-          ? FloatingActionButton.extended(
-        onPressed: () async {
-          final newDriver = await Navigator.push<Driver>(
-            context,
-            MaterialPageRoute(builder: (_) => const DriverFormPage()),
-          );
-          if (newDriver != null) {
-            notifier.addDriver(newDriver);
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("Add Driver"),
-      )
-          : null,
- */

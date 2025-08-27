@@ -1,39 +1,47 @@
-import 'package:collection/collection.dart';
-import '../../admin /data/admin_repository.dart';
-import '../../admin /data/driver_repository.dart';
-import '../../developer/developer_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthRepository {
-  final DriverRepository driverRepo;
-  final AdminRepository adminRepo;
-  final DeveloperRepository developerRepository;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  AuthRepository(this.driverRepo, this.adminRepo, this.developerRepository);
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  /// Returns the logged-in Admin or Driver object, or null if not found.
-  Future<dynamic> login(String role, String email, String passwordHash) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+  Future<User?> signIn(String email, String password) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user;
+  }
 
-    if (role == 'admin') {
-      final admins = await adminRepo.getAllAdmins();
-      return admins.firstWhereOrNull(
-            (a) => a.email == email && a.passwordHash == passwordHash,
-      );
-    }
+  Future<User?> signUp(String email, String password) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-    if (role == 'driver') {
-      final drivers = await driverRepo.getAllDrivers();
-      return drivers.firstWhereOrNull(
-            (d) => d.email == email && d.passwordHash == passwordHash,
-      );
-    }
+    // Create user document in Firestore
+    await _firestore.collection("users").doc(credential.user!.uid).set({
+      "email": email,
+      "role": "driver", // default role
+      "createdAt": FieldValue.serverTimestamp(),
+    });
 
-    if (role == 'developer') {
-      final drivers = await developerRepository.getDeveloper();
-      return drivers.firstWhereOrNull(
-            (d) => d.email == email && d.passwordHash == passwordHash,
-      );
+    return credential.user;
+  }
+
+  Future<void> signOut() async => await _auth.signOut();
+
+  Future<String?> getUserRole(String uid) async {
+    try {
+      final doc = await _firestore.collection("users").doc(uid).get();
+      if (doc.exists) return doc.data()?["role"] as String?;
+    } catch (e) {
+      print("Error getting user role: $e");
     }
     return null;
   }
+
+  User? get currentUser => _auth.currentUser;
 }

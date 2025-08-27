@@ -1,5 +1,4 @@
 import 'package:logistic_management/features/admin%20/model/stock.dart';
-import 'job.dart';
 import 'vehicle.dart';
 import 'document.dart';
 
@@ -9,12 +8,13 @@ class Driver {
   final String email;
   final String passwordHash;
   final String phoneNumber;
-  final String profilePhoto;
-  final Vehicle vehicle;
-  final Document document;
-  List<Stock> activeStocks;
-  List<Stock> previousStocks;
-  final LatLngPoint? lastLocation;
+
+  // Optional fields (filled later in profile)
+  final String? profilePhoto;
+  final Vehicle? vehicle;
+  final Document? document;
+  final List<Stock> activeStocks;
+  final List<Stock> previousStocks;
 
   Driver({
     required this.id,
@@ -22,28 +22,56 @@ class Driver {
     required this.email,
     required this.passwordHash,
     required this.phoneNumber,
-    required this.profilePhoto,
-    required this.vehicle,
-    required this.document,
-    required this.activeStocks,
-    required this.previousStocks,
-    this.lastLocation,
+    this.profilePhoto,
+    this.vehicle,
+    this.document,
+    this.activeStocks = const [],
+    this.previousStocks = const [],
   });
 
-  /// Named constructor for an empty/default driver
-  factory Driver.empty() {
+  factory Driver.fromMap(Map<String, dynamic> map, String id) {
     return Driver(
-      id: 'unknown',
+      id: id,
+      icNumber: map['icNumber'] ?? '',
+      email: map['email'] ?? '',
+      passwordHash: map['passwordHash'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      profilePhoto: map['profilePhoto'],
+      vehicle: map['vehicle'] != null ? Vehicle.fromMap(map['vehicle']) : null,
+      document: map['document'] != null ? Document.fromMap(map['document']) : null,
+      activeStocks: (map['activeStocks'] as List?)
+          ?.map((s) => Stock.fromMap(s as Map<String, dynamic>))
+          .toList() ??
+          [],
+      previousStocks: (map['previousStocks'] as List?)
+          ?.map((s) => Stock.fromMap(s as Map<String, dynamic>))
+          .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'icNumber': icNumber,
+      'email': email,
+      'passwordHash': passwordHash,
+      'phoneNumber': phoneNumber,
+    };
+  }
+
+  /// Empty driver factory with safe defaults
+  factory Driver.empty({String id = 'unknown'}) {
+    return Driver(
+      id: id,
       icNumber: '',
-      email: 'Unknown',
+      email: '',
       passwordHash: '',
       phoneNumber: '',
-      profilePhoto: '',
-      vehicle: Vehicle(name: 'Unknown Lorry', registrationNumber: '', type: ''),
-      document: Document(icPhoto: '', licencePhoto: ''),
-      activeStocks: [],
-      previousStocks: [],
-      lastLocation: null,
+      profilePhoto: null,
+      vehicle: null,
+      document: null,
+      activeStocks: const [],
+      previousStocks: const [],
     );
   }
 }

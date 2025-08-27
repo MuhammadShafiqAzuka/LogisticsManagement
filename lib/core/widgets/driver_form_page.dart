@@ -39,13 +39,13 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
     _emailController = TextEditingController(text: widget.driver?.email ?? '');
     _phoneController = TextEditingController(text: widget.driver?.phoneNumber ?? '');
     _icController = TextEditingController(text: widget.driver?.icNumber ?? '');
-    _vehicleNameController = TextEditingController(text: widget.driver?.vehicle.name ?? '');
-    _vehicleRegController = TextEditingController(text: widget.driver?.vehicle.registrationNumber ?? '');
-    _vehicleTypeController = TextEditingController(text: widget.driver?.vehicle.type ?? '');
+    _vehicleNameController = TextEditingController(text: widget.driver?.vehicle?.name ?? '');
+    _vehicleRegController = TextEditingController(text: widget.driver?.vehicle?.registrationNumber ?? '');
+    _vehicleTypeController = TextEditingController(text: widget.driver?.vehicle?.type ?? '');
 
     _profilePhotoPath = widget.driver?.profilePhoto;
-    _icPhotoPath = widget.driver?.document.icPhoto;
-    _licencePhotoPath = widget.driver?.document.licencePhoto;
+    _icPhotoPath = widget.driver?.document?.icPhoto;
+    _licencePhotoPath = widget.driver?.document?.licencePhoto;
   }
 
   Future<void> _pickImage(Function(String) onImagePicked) async {

@@ -1,27 +1,12 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorage {
-  static const _keyIsLoggedIn = 'isLoggedIn';
-  static const _keyRole = 'role';
   static const _keyDriverId = 'driverId';
 
-  static Future<void> saveLogin(String role, {String? driverId}) async {
+  /// Save driverId for quick access
+  static Future<void> saveDriverId(String driverId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyIsLoggedIn, true);
-    await prefs.setString(_keyRole, role);
-    if (driverId != null) {
-      await prefs.setString(_keyDriverId, driverId);
-    }
-  }
-
-  static Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyIsLoggedIn) ?? false;
-  }
-
-  static Future<String?> getRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyRole);
+    await prefs.setString(_keyDriverId, driverId);
   }
 
   static Future<String?> getDriverId() async {
@@ -29,7 +14,13 @@ class LocalStorage {
     return prefs.getString(_keyDriverId);
   }
 
-  static Future<void> logout() async {
+  static String? getDriverIdSync() {
+    // optional convenience sync getter (use carefully)
+    final prefs = SharedPreferences.getInstance();
+    return prefs.then((p) => p.getString(_keyDriverId)) as String?;
+  }
+
+  static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }

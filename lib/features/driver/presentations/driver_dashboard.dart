@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../../core/constants/const.dart';
 import '../../../core/service/background_service.dart';
-import '../../../core/storage/local_storage.dart';
 import '../../auth/presentation/login_screen.dart';
 import 'my_jobs_page.dart';
 
@@ -102,13 +102,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await _stopLocationTracking();
-              await LocalStorage.logout();
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
+              await FirebaseAuth.instance.signOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
             },
           ),
         ],

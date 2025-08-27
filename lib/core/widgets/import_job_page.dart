@@ -42,7 +42,7 @@ class _ImportJobPageState extends ConsumerState<ImportJobPage> {
         ? drivers
         : drivers
         .where((d) =>
-    d.vehicle.type.toLowerCase() == requiredType.toLowerCase())
+    d.vehicle?.type.toLowerCase() == requiredType.toLowerCase())
         .toList();
 
     if (matchingDrivers.isEmpty) {

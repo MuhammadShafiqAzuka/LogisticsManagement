@@ -56,7 +56,7 @@ Future<void> onStart(ServiceInstance service) async {
   Geolocator.getPositionStream(
     locationSettings: const LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      distanceFilter: 1,
     ),
   ).listen((pos) {
     if (driverId != null) {

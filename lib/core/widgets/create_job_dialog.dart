@@ -94,7 +94,7 @@ class _CreateJobPageState extends ConsumerState<CreateJobPage> {
                                   final driver = filteredDrivers[index];
                                   return ListTile(
                                     title: Text(driver.email),
-                                    subtitle: Text(driver.vehicle.registrationNumber),
+                                    subtitle: Text(driver.vehicle!.registrationNumber),
                                     onTap: () => Navigator.pop(context, driver),
                                   );
                                 },

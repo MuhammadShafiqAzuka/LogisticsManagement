@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:logistic_management/core/widgets/all_driver_location_page.dart';
 import 'package:logistic_management/core/widgets/job_map_page.dart';
@@ -6,7 +7,6 @@ import '../../developer/location_toggle_page.dart';
 import '../../auth/presentation/login_screen.dart';
 import 'all_job_page.dart';
 import 'all_drivers_page.dart';
-import 'all_stock_page.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -33,7 +33,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await LocalStorage.logout();
+              await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginScreen()),

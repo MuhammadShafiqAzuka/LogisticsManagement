@@ -1,14 +1,11 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../driver/providers/driver_job_provider.dart';
 import '../data/auth_repository.dart';
-import '../../admin /provider/admin_provider.dart';
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final driverRepo = ref.read(driverRepositoryProvider);
-  final adminRepo = ref.read(adminRepositoryProvider);
-  final developerRepo = ref.read(developerRepositoryProvider);
+final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository());
 
-  return AuthRepository(driverRepo, adminRepo, developerRepo);
+/// Holds the role of the current user
+final authRoleProvider = FutureProvider.family<String?, String>((ref, uid) async {
+  final repo = ref.read(authRepositoryProvider);
+  final role = await repo.getUserRole(uid);
+  return role ?? "unknown";
 });
-
-final authStateProvider = StateProvider<String?>((ref) => null);

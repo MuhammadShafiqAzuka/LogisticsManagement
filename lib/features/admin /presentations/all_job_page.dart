@@ -62,7 +62,7 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
     return Scaffold(
       body: driversAsync.when(
         data: (drivers) {
-          final vehicleTypes = drivers.map((d) => d.vehicle.type).toSet().toList();
+          final vehicleTypes = drivers.map((d) => d.vehicle!.type).toSet().toList();
 
           final activeJobs = jobs.where((j) => j.status == 'active').length;
           final pendingJobs = jobs.where((j) => j.status == 'pending').length;
@@ -206,7 +206,7 @@ class JobsTab extends ConsumerWidget {
           ),
           orElse: () => Driver.empty(),
         );
-        if (driver.vehicle.type != vehicleFilter) return false;
+        if (driver.vehicle!.type != vehicleFilter) return false;
       }
 
       return true;
@@ -388,9 +388,9 @@ class JobsTab extends ConsumerWidget {
                             children: [
                               /// Profile photo
                               CircleAvatar(
-                                backgroundImage: driver.profilePhoto.startsWith('assets')
-                                    ? AssetImage(driver.profilePhoto) as ImageProvider
-                                    : FileImage(File(driver.profilePhoto)),
+                                backgroundImage: driver.profilePhoto!.startsWith('assets')
+                                    ? AssetImage(driver.profilePhoto!) as ImageProvider
+                                    : FileImage(File(driver.profilePhoto!)),
                               ),
                               const SizedBox(width: 12),
 
@@ -408,14 +408,14 @@ class JobsTab extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      "${driver.vehicle.name} (${driver.vehicle.registrationNumber})",
+                                      "${driver.vehicle!.name} (${driver.vehicle!.registrationNumber})",
                                       style: const TextStyle(
                                         color: Colors.black54,
                                         fontSize: 14,
                                       ),
                                     ),
                                     Text(
-                                      "Type: ${driver.vehicle.type}",
+                                      "Type: ${driver.vehicle!.type}",
                                       style: const TextStyle(
                                         color: Colors.black54,
                                         fontSize: 13,
