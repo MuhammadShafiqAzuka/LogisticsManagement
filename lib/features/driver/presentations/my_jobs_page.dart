@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
@@ -26,39 +27,38 @@ class MyJobsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
       length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("My Jobs"),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(48),
-            child: Consumer(
-              builder: (context, ref, _) {
-                final activeCount   = ref.watch(activeJobsProvider(driverId)).length;
-                final finishedCount = ref.watch(finishedJobsProvider(driverId)).length;
-                final pendingCount  = ref.watch(pendingJobsProvider(driverId)).length;
-                final returnedCount = ref.watch(returnedJobsProvider(driverId)).length;
+      child: Column(
+        children: [
+          SizedBox(height: 10),
+          Consumer(
+            builder: (context, ref, _) {
+              final activeCount   = ref.watch(activeJobsProvider(driverId)).length;
+              final finishedCount = ref.watch(finishedJobsProvider(driverId)).length;
+              final pendingCount  = ref.watch(pendingJobsProvider(driverId)).length;
+              final returnedCount = ref.watch(returnedJobsProvider(driverId)).length;
 
-                return TabBar(
-                  isScrollable: true,
-                  tabs: [
-                    _buildTabWithBadge("Active", activeCount, Colors.orange),
-                    _buildTabWithBadge("Finished", finishedCount, Colors.green),
-                    _buildTabWithBadge("Pending", pendingCount, Colors.blue),
-                    _buildTabWithBadge("Returned", returnedCount, Colors.red),
-                  ],
-                );
-              },
+              return TabBar(
+                isScrollable: true,
+                tabs: [
+                  _buildTabWithBadge("Active", activeCount, Colors.orange),
+                  _buildTabWithBadge("Finished", finishedCount, Colors.green),
+                  _buildTabWithBadge("Pending", pendingCount, Colors.blue),
+                  _buildTabWithBadge("Returned", returnedCount, Colors.red),
+                ],
+              );
+            },
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildJobList(context, ref.watch(activeJobsProvider(driverId)), ref),
+                _buildJobList(context, ref.watch(finishedJobsProvider(driverId)), ref),
+                _buildJobList(context, ref.watch(pendingJobsProvider(driverId)), ref),
+                _buildJobList(context, ref.watch(returnedJobsProvider(driverId)), ref),
+              ],
             ),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildJobList(context, ref.watch(activeJobsProvider(driverId)), ref),
-            _buildJobList(context, ref.watch(finishedJobsProvider(driverId)), ref),
-            _buildJobList(context, ref.watch(pendingJobsProvider(driverId)), ref),
-            _buildJobList(context, ref.watch(returnedJobsProvider(driverId)), ref),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -299,8 +299,8 @@ class MyJobsPage extends ConsumerWidget {
                         context,
                         job,
                         currentStatus,
-                        jobUpdate?.proofPath ?? job.proof?.proofPhoto,
-                        jobUpdate?.signatureBytes,
+                        jobUpdate?.proofPhotoUrl ?? job.proof?.proofPhoto,
+                        jobUpdate?.proofSignatureUrl,
                         job.proof?.proofSignature,
                         jobUpdate?.reason ?? job.proof?.proofReason,
                         formattedDate,
@@ -348,10 +348,32 @@ class MyJobsPage extends ConsumerWidget {
           height: 150,
           fit: BoxFit.cover,
         )
-            : Image.asset(
+            : Image.network(
           proofPath,
           height: 150,
           fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child; // fully loaded
+            return SizedBox(
+              height: 150,
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return SizedBox(
+              height: 150,
+              child: Center(
+                child: Icon(Icons.broken_image, color: Colors.grey),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -441,7 +463,8 @@ class MyJobsPage extends ConsumerWidget {
     );
   }
 
-  void _showStatusDetailsDialog(BuildContext context, Job2 job, String status, String? proofPath, Uint8List? signatureBytes, String? signatureProof, String? reason, String formattedDate) {
+  void _showStatusDetailsDialog(BuildContext context, Job2 job, String status, String? proofPath,
+      String? proofSignaturePath, String? signatureProof, String? reason, String formattedDate) {
     IconData icon;
     Color color;
     String title;
@@ -489,10 +512,10 @@ class MyJobsPage extends ConsumerWidget {
                 if (proofPath != null)
                   _buildProofImage(proofPath, isLocal: job.proof?.proofPhoto == null),
                 const SizedBox(height: 12),
-                if (signatureBytes != null)
-                  Image.memory(signatureBytes, height: 150, fit: BoxFit.cover),
+                if (proofSignaturePath != null)
+                  Image.network(proofSignaturePath, height: 150, fit: BoxFit.cover),
                 if (signatureProof != null)
-                  Image.asset(signatureProof, height: 150, fit: BoxFit.cover),
+                  _buildProofImage(signatureProof, isLocal: job.proof?.proofPhoto == null),
               ],
               if (status == 'pending' || status == 'returned') ...[
                 Text("Reason: ${reason ?? 'No reason provided'}"),
@@ -562,24 +585,34 @@ class _FinishOrPendingSheetState extends State<_FinishOrPendingSheet> {
 
     try {
       Uint8List? signatureBytes;
+      String? signatureFilePath;
 
       if (widget.mode == CompleteMode.finished) {
+        // 1️⃣ Capture signature image
         final ui.Image? sigImage = await _sigKey.currentState?.toImage(pixelRatio: 3.0);
         final byteData = await sigImage?.toByteData(format: ui.ImageByteFormat.png);
         signatureBytes = byteData?.buffer.asUint8List();
+
+        // 2️⃣ Save signature to writable temp directory
+        if (signatureBytes != null) {
+          final tempDir = await getTemporaryDirectory();
+          final tempFile = File('${tempDir.path}/${widget.jobId}_signature.png');
+          await tempFile.writeAsBytes(signatureBytes);
+          signatureFilePath = tempFile.path;
+        }
       }
 
+      // 3️⃣ Submit all data to notifier
       widget.onSubmit(
-        _proofPath,
-        signatureBytes,
+        _proofPath,                     // photo path (camera)
+        signatureBytes,                 // signature bytes
         (widget.mode == CompleteMode.pending || widget.mode == CompleteMode.returned)
             ? _reasonCtrl.text
             : null,
       );
-
-      if (mounted) Navigator.pop(context);
     } finally {
       if (mounted) setState(() => _submitting = false);
+      if (mounted) Navigator.pop(context);
     }
   }
 

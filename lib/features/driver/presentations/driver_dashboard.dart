@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:logistic_management/features/driver/presentations/profile_page.dart';
 import '../../../core/service/background_service.dart';
 import '../../auth/presentation/login_screen.dart';
 import 'my_jobs_page.dart';
@@ -16,11 +17,19 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
+  int _currentIndex = 0;
+
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     _initLocationTracking();
+
+    _pages = [
+      MyJobsPage(driverId: widget.driverId),
+      DriverProfilePage(),
+    ];
   }
 
   Future<void> _initLocationTracking() async {
@@ -46,7 +55,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Driver Dashboard'),
+        title: Text(_currentIndex == 0 ? 'My Jobs' : 'Profile'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -54,7 +63,21 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
         ],
       ),
-      body: MyJobsPage(driverId: widget.driverId),
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work_outline),
+            label: 'My Jobs',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
+      ),
     );
   }
 }

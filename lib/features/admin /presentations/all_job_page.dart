@@ -283,7 +283,7 @@ class JobsTab extends ConsumerWidget {
                                 endChild: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Text(
-                                    "Dropoff: ${job.dropoffLocation}\n(${job.dropoffLatLng.latitude}, ${job.dropoffLatLng.longitude})",
+                                    "Drop off: ${job.dropoffLocation}\n(${job.dropoffLatLng.latitude}, ${job.dropoffLatLng.longitude})",
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                 ),

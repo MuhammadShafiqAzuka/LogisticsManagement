@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../data/driver_repository.dart';
 import '../model/driver.dart';
@@ -10,10 +9,14 @@ class DriverNotifier extends StateNotifier<AsyncValue<List<Driver>>> {
   late final StreamSubscription _sub;
 
   DriverNotifier(this.repository) : super(const AsyncValue.loading()) {
-    // Listen for real-time driver updates from Firestore
+    // 🟢 This is admin-only!
     _sub = repository.watchAllDrivers().listen(
-          (drivers) => state = AsyncValue.data(drivers),
-      onError: (e, st) => state = AsyncValue.error(e, st),
+          (drivers) {
+        state = AsyncValue.data(drivers);
+      },
+      onError: (e, st) {
+        state = AsyncValue.error(e, st);
+      },
     );
   }
 
@@ -23,37 +26,23 @@ class DriverNotifier extends StateNotifier<AsyncValue<List<Driver>>> {
     super.dispose();
   }
 
-  Future<void> addDriver(Driver driver) async {
-    await repository.addDriver(driver);
-  }
+  Future<void> addDriver(Driver driver) async =>
+      repository.addDriver(driver);
 
-  Future<void> updateDriver(Driver updated) async {
-    await repository.updateDriver(updated);
-  }
+  Future<void> updateDriver(Driver updated) async =>
+      repository.updateDriver(updated);
 
-  Future<void> deleteDriver(String id) async {
-    await repository.deleteDriver(id);
-  }
+  Future<void> deleteDriver(String id) async =>
+      repository.deleteDriver(id);
 
-  /// RTDB: stream single driver's location
-  Stream<LatLngPoint?> watchDriverLocation(String driverId) {
-    return repository.watchDriverLocation(driverId);
-  }
+  Stream<Driver> watchCurrentDriver(String uid) =>
+      repository.watchCurrentDriver(uid);
 
-  /// RTDB: stream all drivers' locations
-  Stream<Map<String, LatLngPoint>> watchAllDriversLocations() {
-    return repository.watchAllDriversLocations();
-  }
+  Stream<LatLngPoint?> watchDriverLocation(String driverId) =>
+      repository.watchDriverLocation(driverId);
 
-  /// ✅ Assign role in Firestore
-  Future<void> assignRole({required String uid, required String role}) async {
-    final usersRef = FirebaseFirestore.instance.collection("users").doc(uid);
-
-    await usersRef.set(
-      {"role": role},
-      SetOptions(merge: true), // merge so we don’t overwrite existing data
-    );
-  }
+  Stream<Map<String, LatLngPoint>> watchAllDriversLocations() =>
+      repository.watchAllDriversLocations();
 }
 
 // Providers

@@ -1,15 +1,27 @@
-import 'dart:typed_data';
-
 class JobStatusUpdate {
   final String status;
-  final String? proofPath;
-  final Uint8List? signatureBytes;
+  final String? proofPhotoUrl;
+  final String? proofSignatureUrl;
   final String? reason;
 
   JobStatusUpdate({
     required this.status,
-    this.proofPath,
-    this.signatureBytes,
+    this.proofPhotoUrl,
+    this.proofSignatureUrl,
     this.reason,
   });
+
+  JobStatusUpdate copyWith({
+    String? status,
+    String? proofPhotoUrl,
+    String? proofSignatureUrl,
+    String? reason,
+  }) {
+    return JobStatusUpdate(
+      status: status ?? this.status,
+      proofPhotoUrl: proofPhotoUrl ?? this.proofPhotoUrl,
+      proofSignatureUrl: proofSignatureUrl ?? this.proofSignatureUrl,
+      reason: reason ?? this.reason,
+    );
+  }
 }

@@ -6,7 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../features/admin /model/job.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 
 const String apiKey = "AIzaSyA5d1fDP_IpTBJtbzMPKfWNup9SxcegOQY";
 enum CompleteMode { finished, pending, returned }
@@ -145,10 +146,116 @@ DateTime parseExcelDate(String? raw) {
   return DateTime.now();
 }
 
-ImageProvider<Object> safeImageProvider(String? path, {String defaultAsset = 'assets/default_driver.png'}) {
-  if (path != null && path.isNotEmpty && File(path).existsSync()) {
-    return FileImage(File(path));
-  } else {
+/// Returns an ImageProvider that safely handles file, network, or asset images
+ImageProvider safeImageProvider(String? path, {required String defaultAsset}) {
+  if (path == null || path.isEmpty) {
     return AssetImage(defaultAsset);
+  }
+
+  if (path.startsWith("http")) {
+    return NetworkImage(path);
+  }
+
+  if (File(path).existsSync()) {
+    return FileImage(File(path));
+  }
+
+  return AssetImage(defaultAsset);
+}
+
+/// Returns a widget with proper fallback and loading indicator
+Widget safeImageWidget(
+    String? path, {
+      required String defaultAsset,
+      double? width,
+      double? height,
+      BoxFit fit = BoxFit.cover,
+    }) {
+  if (path == null || path.isEmpty) {
+    return Image.asset(defaultAsset, width: width, height: height, fit: fit);
+  }
+
+  if (path.startsWith("http")) {
+    return Image.network(
+      path,
+      width: width,
+      height: height,
+      fit: fit,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              value: progress.expectedTotalBytes != null
+                  ? progress.cumulativeBytesLoaded /
+                  (progress.expectedTotalBytes ?? 1)
+                  : null,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Image.asset(defaultAsset,
+            width: width, height: height, fit: fit);
+      },
+    );
+  }
+
+  if (File(path).existsSync()) {
+    return Image.file(File(path), width: width, height: height, fit: fit);
+  }
+
+  return Image.asset(defaultAsset, width: width, height: height, fit: fit);
+}
+
+class StorageService {
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  Future<String> uploadDriverFile({
+    required String driverId,
+    required File file,
+    required String fileName,
+  }) async {
+    try {
+      final ref = _storage.ref().child("drivers/$driverId/$fileName");
+      await ref.putFile(file);
+      return await ref.getDownloadURL(); // 🔥 return download URL
+    } catch (e) {
+      throw Exception("Failed to upload file: $e");
+    }
+  }
+
+  Future<String?> uploadFileToStorage(
+      String jobId,
+      File file,
+      String fileType,
+      ) async {
+    try {
+      final fileName = "${jobId}_$fileType.png";
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child("jobs/$jobId/$fileType/$fileName");
+
+      await ref.putFile(file);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print("Upload error: $e");
+      return null;
+    }
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    return newValue.copyWith(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
   }
 }

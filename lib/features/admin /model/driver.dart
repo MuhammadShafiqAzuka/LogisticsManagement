@@ -6,10 +6,10 @@ class Driver {
   final String id;
   final String icNumber;
   final String email;
-  final String passwordHash; // Only used in memory (e.g., registration), not Firestore
   final String phoneNumber;
 
   // Optional fields
+  final String? passwordHash; // Only used in memory (e.g., registration), not Firestore
   final String? profilePhoto;
   final Vehicle? vehicle;
   final Document? document;
@@ -20,7 +20,7 @@ class Driver {
     required this.id,
     required this.icNumber,
     required this.email,
-    required this.passwordHash,
+    this.passwordHash,
     required this.phoneNumber,
     this.profilePhoto,
     this.vehicle,

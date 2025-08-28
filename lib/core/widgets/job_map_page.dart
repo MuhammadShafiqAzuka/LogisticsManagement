@@ -334,17 +334,12 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
           const SizedBox(height: 16),
           const Divider(),
 
-          Text("Stock Carried", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text("Storage Condition", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
           ListTile(
             leading: const Icon(Icons.inventory_2_outlined, color: Colors.blue),
             title: Text(widget.job.stocks),
           ),
-          if (isStockLong)
-            TextButton(
-              onPressed: () => setState(() => _showAllStocks = !_showAllStocks),
-              child: Text(_showAllStocks ? "Show Less" : "Show More", style: const TextStyle(color: Colors.blue)),
-            ),
 
           if (widget.job.status == 'active') ...[
             const Divider(),
@@ -418,15 +413,19 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              _buildProofImage(jobUpdate?.proofPath ?? widget.job.proof?.proofPhoto, isLocal: widget.job.proof?.proofPhoto == null),
+              _buildProofImage(jobUpdate?.proofPhotoUrl ?? widget.job.proof?.proofPhoto, isLocal: widget.job.proof?.proofPhoto == null),
               const SizedBox(height: 12),
               Text(
                 "Proof of Signature",
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              if (jobUpdate?.signatureBytes != null)
-                Image.memory(jobUpdate!.signatureBytes!, height: 150, fit: BoxFit.cover),
+              if (jobUpdate?.proofSignatureUrl != null)
+                Image.network(
+                  jobUpdate!.proofSignatureUrl!,
+                  height: 150,
+                  fit: BoxFit.cover,
+                ),
               if (widget.job.proof?.proofSignature != null)
                 Image.asset(widget.job.proof!.proofSignature!, height: 150, fit: BoxFit.cover),
             ],
@@ -481,47 +480,47 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
   }
 
   Widget _buildStopList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Stops", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 8),
-        Column(
-          children: [
-            TimelineTile(
-              isFirst: true,
-              alignment: TimelineAlign.start,
-              lineXY: 0.1,
-              indicatorStyle: IndicatorStyle(
-                color: Colors.blue,
-                width: 20,
-                iconStyle: IconStyle(iconData: Icons.my_location, color: Colors.white),
-              ),
-              endChild: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(widget.job.pickupLocation, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
-              beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
+    return /// PICKUP & DROPOFF
+      Column(
+        children: [
+          TimelineTile(
+            isFirst: true,
+            alignment: TimelineAlign.start,
+            lineXY: 0.1,
+            indicatorStyle: IndicatorStyle(
+              color: Colors.green,
+              width: 20,
+              iconStyle: IconStyle(iconData: Icons.store, color: Colors.white),
             ),
-            TimelineTile(
-              isLast: true,
-              alignment: TimelineAlign.start,
-              lineXY: 0.1,
-              indicatorStyle: IndicatorStyle(
-                color: Colors.red,
-                width: 20,
-                iconStyle: IconStyle(iconData: Icons.location_on, color: Colors.white),
+            endChild: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Pickup: ${widget.job.pickupLocation}\n(${widget.job.pickupLatLng.latitude}, ${widget.job.pickupLatLng.longitude})",
+                style: const TextStyle(fontSize: 14),
               ),
-              endChild: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(widget.job.dropoffLocation, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
-              beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
             ),
-          ],
-        ),
-      ],
-    );
+            beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
+          ),
+          TimelineTile(
+            isLast: true,
+            alignment: TimelineAlign.start,
+            lineXY: 0.1,
+            indicatorStyle: IndicatorStyle(
+              color: Colors.red,
+              width: 20,
+              iconStyle: IconStyle(iconData: Icons.location_on, color: Colors.white),
+            ),
+            endChild: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Drop off: ${widget.job.dropoffLocation}\n(${widget.job.dropoffLatLng.latitude}, ${widget.job.dropoffLatLng.longitude})",
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+            beforeLineStyle: LineStyle(color: Colors.grey.shade400, thickness: 2),
+          ),
+        ],
+      );
   }
 }
 

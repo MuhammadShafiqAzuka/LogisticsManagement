@@ -252,12 +252,10 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                       }
 
                       final newDriver = Driver(
-                        id: widget.driver?.id ?? '-1',
+                        id: widget.driver?.id ?? '',
                         icNumber: _icController.text,
                         email: _emailController.text,
-                        passwordHash: widget.driver?.passwordHash ?? 'hashed_pw',
                         phoneNumber: _phoneController.text,
-                        // Only save profilePhoto if user picked one
                         profilePhoto: _profilePhotoPath,
                         vehicle: Vehicle(
                           name: _vehicleNameController.text,
@@ -270,8 +268,12 @@ class _DriverFormPageState extends ConsumerState<DriverFormPage> {
                       );
 
                       final notifier = ref.read(driverNotifierProvider.notifier);
+
                       if (widget.driver == null) {
-                        await notifier.addDriver(newDriver);
+                        // 🚨 Require id from auth (cannot create fake id)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Driver must be created after authentication")),
+                        );
                       } else {
                         await notifier.updateDriver(newDriver);
                       }
