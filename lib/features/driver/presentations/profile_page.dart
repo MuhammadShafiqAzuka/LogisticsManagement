@@ -85,20 +85,24 @@ class _DriverProfilePageState extends ConsumerState<DriverProfilePage> {
       onTap: () => _pickImage(onPicked),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage:
-            safeImageProvider(currentPath, defaultAsset: defaultAsset),
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
-              ),
+          ClipOval(
+            child: SizedBox(
+              width: 100,
+              height: 100,
+              child: currentPath != null
+                  ? Image.network(
+                currentPath,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(defaultAsset, fit: BoxFit.cover);
+                }
+              ): Image.asset(defaultAsset, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(height: 6),
@@ -122,41 +126,28 @@ class _DriverProfilePageState extends ConsumerState<DriverProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              Container(
-                height: 130,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: safeImageWidget(
-                    currentPath,
-                    defaultAsset: defaultAsset,
-                    width: double.infinity,
-                    height: 130,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.edit,
-                      size: 20, color: Colors.white),
-                ),
-              ),
-            ],
+          Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: currentPath != null
+                ? Image.network(
+              currentPath,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset(defaultAsset, fit: BoxFit.cover);
+              },
+            )
+                : Image.asset(defaultAsset, fit: BoxFit.cover),
           ),
           const SizedBox(height: 6),
           Text(label,
@@ -263,16 +254,22 @@ class _DriverProfilePageState extends ConsumerState<DriverProfilePage> {
         final driver = snapshot.data!;
 
         if (!_initialized && snapshot.hasData) {
-          _emailController.text = driver.email;
-          _phoneController.text = driver.phoneNumber;
-          _icController.text = driver.icNumber ?? '';
-          _vehicleNameController.text = driver.vehicle?.name ?? '';
-          _vehicleRegController.text = driver.vehicle?.registrationNumber ?? '';
-          _vehicleTypeController.text = driver.vehicle?.type ?? '';
-          _profilePhotoPath = driver.profilePhoto;
-          _icPhotoPath = driver.document?.icPhoto;
-          _licencePhotoPath = driver.document?.licencePhoto;
-          _initialized = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _emailController.text = driver.email;
+            _phoneController.text = driver.phoneNumber;
+            _icController.text = driver.icNumber ?? '';
+            _vehicleNameController.text = driver.vehicle?.name ?? '';
+            _vehicleRegController.text = driver.vehicle?.registrationNumber ?? '';
+            _vehicleTypeController.text = driver.vehicle?.type ?? '';
+            _profilePhotoPath = driver.profilePhoto;
+            _icPhotoPath = driver.document?.icPhoto;
+            _licencePhotoPath = driver.document?.licencePhoto;
+
+            setState(() {
+              _initialized = true;
+            });
+          });
         }
 
         return Scaffold(
@@ -297,14 +294,14 @@ class _DriverProfilePageState extends ConsumerState<DriverProfilePage> {
                     label: "IC Photo",
                     currentPath: _icPhotoPath,
                     onPicked: (path) => _icPhotoPath = path,
-                    defaultAsset: 'assets/ic_default.png',
+                    defaultAsset: 'assets/licence1.jpg',
                   ),
                   const SizedBox(height: 16),
                   _buildRectImagePicker(
                     label: "Licence Photo",
                     currentPath: _licencePhotoPath,
                     onPicked: (path) => _licencePhotoPath = path,
-                    defaultAsset: 'assets/licence_default.png',
+                    defaultAsset: 'assets/licence2.jpg',
                   ),
                   const SizedBox(height: 20),
 

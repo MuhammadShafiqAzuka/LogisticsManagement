@@ -16,7 +16,7 @@ final job2RepositoryProvider = Provider<Job2Repository>((ref) {
 /// ✅ All driver jobs stream
 final driverJobsStreamProvider =
 StreamProvider.family<List<Job2>, String>((ref, driverId) {
-  return ref.watch(job2RepositoryProvider).watchDriverJobs(driverId);
+  return ref.watch(job2RepositoryProvider).watchActiveDriverJobs(driverId);
 });
 
 /// ✅ Filtered jobs by status

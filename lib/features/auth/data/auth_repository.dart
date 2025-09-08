@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -12,6 +15,10 @@ class AuthRepository {
       email: email,
       password: password,
     );
+
+    // ✅ Save FCM token
+    await _updateFcmToken(credential.user!.uid);
+
     return credential.user;
   }
 
@@ -21,17 +28,63 @@ class AuthRepository {
       password: password,
     );
 
-    // Create user document in Firestore
+    // ✅ Save FCM token for new user
     await _firestore.collection("users").doc(credential.user!.uid).set({
       "email": email,
       "role": "driver",
       "createdAt": FieldValue.serverTimestamp(),
     });
 
+    await _updateFcmToken(credential.user!.uid);
+
     return credential.user;
   }
 
-  Future<void> signOut() async => await _auth.signOut();
+  Future<void> _updateFcmToken(String uid) async {
+    try {
+      // ✅ Get APNs token (iOS only, but don't block FCM if null)
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        print("📱 iOS APNs token: $apnsToken");
+      }
+
+      // ✅ Always get latest FCM token
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      print("📱 Current FCM token: $fcmToken");
+
+      if (fcmToken != null) {
+        await _firestore.collection("users").doc(uid).set({
+          "fcmToken": fcmToken,
+          "lastLogin": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true)); // ✅ overwrite safely
+      }
+
+      // ✅ Listen for future token refreshes
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        print("🔄 Token refreshed: $newToken");
+        await _firestore.collection("users").doc(uid).set({
+          "fcmToken": newToken,
+        }, SetOptions(merge: true));
+      });
+    } catch (e) {
+      print("Error updating FCM token: $e");
+    }
+  }
+
+  Future<void> signOut() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        await _firestore.collection("users").doc(user.uid).update({
+          "fcmToken": FieldValue.delete(), // ✅ clear token
+        });
+      } catch (e) {
+        print("Error clearing FCM token on signOut: $e");
+      }
+    }
+
+    await _auth.signOut();
+  }
 
   Future<String?> getUserRole(String uid) async {
     try {

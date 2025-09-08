@@ -21,6 +21,8 @@ Future<void> initializeService(String driverId) async {
         autoStart: true,
         isForegroundMode: true,
         foregroundServiceTypes: [AndroidForegroundType.location],
+        initialNotificationContent: "Tracking...",
+        initialNotificationTitle: "Live Location"
       ),
       iosConfiguration: IosConfiguration(),
     );

@@ -26,6 +26,7 @@ class Job2Notifier extends StateNotifier<List<Job2>> {
   Future<void> addJobs(List<Job2> jobs) async {
     for (final job in jobs) {
       await _repo.createJob(job);
+      print("Job ${job.id} created and notification sent to driver ${job.driverId}");
     }
   }
 

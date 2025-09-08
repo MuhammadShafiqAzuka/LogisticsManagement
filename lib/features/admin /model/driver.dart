@@ -29,6 +29,31 @@ class Driver {
     this.previousStocks = const [],
   });
 
+  Driver copyWith({
+    String? icNumber,
+    String? email,
+    String? phoneNumber,
+    String? passwordHash,
+    String? profilePhoto,
+    Vehicle? vehicle,
+    Document? document,
+    List<Stock>? activeStocks,
+    List<Stock>? previousStocks,
+  }) {
+    return Driver(
+      id: id, // id stays the same
+      icNumber: icNumber ?? this.icNumber,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      passwordHash: passwordHash ?? this.passwordHash,
+      profilePhoto: profilePhoto ?? this.profilePhoto,
+      vehicle: vehicle ?? this.vehicle,
+      document: document ?? this.document,
+      activeStocks: activeStocks ?? this.activeStocks,
+      previousStocks: previousStocks ?? this.previousStocks,
+    );
+  }
+
   /// Create a Driver from Firestore data
   factory Driver.fromMap(Map<String, dynamic> map, String id) {
     return Driver(
@@ -79,7 +104,7 @@ class Driver {
   }
 
   /// Safe empty Driver
-  factory Driver.empty({String id = 'unknown'}) {
+  factory Driver.empty({String id = ''}) {
     return Driver(
       id: id,
       icNumber: '',

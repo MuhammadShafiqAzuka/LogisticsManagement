@@ -143,7 +143,21 @@ class MyJobsPage extends ConsumerWidget {
     final style = statusStyle(currentStatus);
     final formattedDate = DateFormat('EEEE, dd/MM/yyyy, HH:mm').format(job.date);
 
+    // TIME & DRIVER
+    final now = DateTime.now();
+    Duration? timeLeft;
+    bool isOverdue = false;
+    bool isDueSoon = false;
+
+    // Only calculate for active or pending jobs
+    if (currentStatus == 'active' || currentStatus == 'pending') {
+      timeLeft = job.dueDate.difference(now);
+      isOverdue = timeLeft.isNegative;
+      isDueSoon = !isOverdue && timeLeft.inHours < 2;
+    }
+
     return Card(
+      color: isDueSoonUI(job.dueDate) ? Colors.red.shade50 : null,
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -156,7 +170,7 @@ class MyJobsPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Order #${job.id}",
+                  "#${job.id}",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -258,8 +272,27 @@ class MyJobsPage extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Due: ${job.dueDate.toLocal().toString().split(' ')[0]}"),
-                Text("Window: ${job.timeWindow}"),
+                Text(
+                  (currentStatus == 'active' || currentStatus == 'pending')
+                      ? (isOverdue
+                      ? "Overdue!"
+                      : isDueSoon
+                      ? "Due in ${timeLeft!.inHours > 0 ? "${timeLeft.inHours}h ${timeLeft.inMinutes % 60}m" : "${timeLeft.inMinutes}m"}"
+                      : "Due: ${DateFormat('dd/MM/yyyy HH:mm').format(job.dueDate)}")
+                      : "", // for finished/returned, you can leave blank or show "Completed"
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isOverdue
+                        ? Colors.red
+                        : isDueSoon
+                        ? Colors.orange
+                        : Colors.black87,
+                  ),
+                ),
+                Text(
+                  "Window: ${job.timeWindow}",
+                  style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -317,7 +350,7 @@ class MyJobsPage extends ConsumerWidget {
                         MaterialPageRoute(
                           builder: (_) => JobMapPage(
                             job: job,
-                            showNavigation: false,
+                            showNavigation: true,
                           ),
                         ),
                       );
@@ -352,28 +385,20 @@ class MyJobsPage extends ConsumerWidget {
           proofPath,
           height: 150,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child; // fully loaded
-            return SizedBox(
-              height: 150,
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                      loadingProgress.expectedTotalBytes!
-                      : null,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return SizedBox(
+                height: 150,
+                child: Center(
+                  child: Icon(Icons.broken_image, color: Colors.grey),
                 ),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return SizedBox(
-              height: 150,
-              child: Center(
-                child: Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            );
-          },
+              );
+            },
         ),
       ),
     );
@@ -420,45 +445,92 @@ class MyJobsPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Update Delivery"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _openFinishOrPendingSheet(
-                context: context,
-                ref: ref,
-                jobId: jobId,
-                mode: CompleteMode.finished,
-              );
-            },
-            child: const Text("Success"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _openFinishOrPendingSheet(
-                context: context,
-                ref: ref,
-                jobId: jobId,
-                mode: CompleteMode.pending,
-              );
-            },
-            child: const Text("Pending"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _openFinishOrPendingSheet(
-                context: context,
-                ref: ref,
-                jobId: jobId,
-                mode: CompleteMode.returned,
-              );
-            },
-            child: const Text("Returned"),
-          ),
-        ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Update Delivery Status",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildStatusOption(
+              context: context,
+              ref: ref,
+              jobId: jobId,
+              mode: CompleteMode.finished,
+              color: Colors.green,
+              icon: Icons.check_circle,
+              label: "Delivered Successfully",
+            ),
+            const SizedBox(height: 12),
+            _buildStatusOption(
+              context: context,
+              ref: ref,
+              jobId: jobId,
+              mode: CompleteMode.pending,
+              color: Colors.orange,
+              icon: Icons.pending_actions,
+              label: "Pending / Not Ready",
+            ),
+            const SizedBox(height: 12),
+            _buildStatusOption(
+              context: context,
+              ref: ref,
+              jobId: jobId,
+              mode: CompleteMode.returned,
+              color: Colors.red,
+              icon: Icons.assignment_return,
+              label: "Returned to Sender",
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusOption({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String jobId,
+    required CompleteMode mode,
+    required Color color,
+    required IconData icon,
+    required String label,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        Navigator.pop(context);
+        _openFinishOrPendingSheet(
+          context: context,
+          ref: ref,
+          jobId: jobId,
+          mode: mode,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: color.withOpacity(0.1),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

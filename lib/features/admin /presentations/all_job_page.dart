@@ -123,7 +123,7 @@ class _AllJobPageState extends ConsumerState<AllJobPage> with SingleTickerProvid
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Text(title),
+          Text(title, style: TextStyle(fontSize: 13)),
           if (count > 0)
             Positioned(
               right: -10,
@@ -244,7 +244,7 @@ class JobsTab extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("Order #${job.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              Text("#${job.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                               Chip(label: Text(job.status.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: style['bg']),
                             ],
                           ),
@@ -335,7 +335,7 @@ class JobsTab extends ConsumerWidget {
                               /// Profile photo
                               CircleAvatar(
                                 backgroundImage: (driver.profilePhoto != null && driver.profilePhoto!.isNotEmpty)
-                                    ? FileImage(File(driver.profilePhoto!))
+                                    ? NetworkImage(driver.profilePhoto!)
                                     : const AssetImage('assets/default_driver.png'),
                               ),
 

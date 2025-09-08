@@ -37,14 +37,13 @@ class Job2Repository {
   }
 
   /// ✅ Stream jobs for a specific driver
-  Stream<List<Job2>> watchDriverJobs(String driverId) {
+  Stream<List<Job2>> watchActiveDriverJobs(String driverId) {
     return jobsCollection
         .where('driverId', isEqualTo: driverId)
+        .where('status', whereIn: ['active', 'pending', 'returned'])
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Job2.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
+      return snapshot.docs.map((doc) => Job2.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
     });
   }
 }

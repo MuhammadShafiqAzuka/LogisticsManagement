@@ -39,7 +39,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AllDriversLiveLocationPage()),
+                MaterialPageRoute(builder: (_) => const AllDriversLiveLocationWithJobsPage()),
               );
             },
           ),

@@ -1,6 +1,4 @@
 import 'package:logistic_management/features/admin%20/model/proof.dart';
-import 'package:logistic_management/features/admin%20/model/stock.dart';
-
 import '../../../core/constants/const.dart';
 
 class LatLngPoint {
@@ -49,62 +47,6 @@ class LatLngPoint {
 
   @override
   int get hashCode => latitude.hashCode ^ longitude.hashCode;
-}
-
-class Job {
-  final String id;
-  final String driverId;
-  final String pickupLocation;
-  final LatLngPoint pickupLatLng;
-  final String dropoffLocation;
-  final LatLngPoint dropoffLatLng;
-  final String status;
-  final DateTime date;
-  final List<Stock> stocks;
-  final Proof? proof;
-
-  Job({
-    required this.id,
-    required this.driverId,
-    required this.pickupLocation,
-    required this.pickupLatLng,
-    required this.dropoffLocation,
-    required this.dropoffLatLng,
-    required this.status,
-    required this.date,
-    required this.stocks,
-    this.proof,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      "id": id,
-      "driverId": driverId,
-      "pickupLocation": pickupLocation,
-      "pickupLatLng": pickupLatLng.toMap(),
-      "dropoffLocation": dropoffLocation,
-      "dropoffLatLng": dropoffLatLng.toMap(),
-      "status": status,
-      "date": date.toIso8601String(),
-      "stocks": stocks.map((s) => s.toMap()).toList(),
-      "proof": proof?.toMap(),
-    };
-  }
-
-  factory Job.fromMap(Map<String, dynamic> map, String id) {
-    return Job(
-      id: id,
-      driverId: map["driverId"],
-      pickupLocation: map["pickupLocation"],
-      pickupLatLng: LatLngPoint.fromMap(Map<String, dynamic>.from(map["pickupLatLng"])),
-      dropoffLocation: map["dropoffLocation"],
-      dropoffLatLng: LatLngPoint.fromMap(Map<String, dynamic>.from(map["dropoffLatLng"])),
-      status: map["status"],
-      date: DateTime.parse(map["date"]),
-      stocks: (map["stocks"] as List).map((s) => Stock.fromMap(Map<String, dynamic>.from(s))).toList(),
-      proof: map["proof"] != null ? Proof.fromMap(Map<String, dynamic>.from(map["proof"])) : null,
-    );
-  }
 }
 
 class Job2 {

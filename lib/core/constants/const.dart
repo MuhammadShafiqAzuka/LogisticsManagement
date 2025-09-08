@@ -15,16 +15,34 @@ enum CompleteMode { finished, pending, returned }
 Future<bool> checkAndRequestPermissions({required bool isDriver}) async {
   try {
     if (isDriver) {
-      // Only location
+      // ✅ Location
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         permission = await Geolocator.requestPermission();
       }
-      return permission == LocationPermission.always ||
+      bool locationGranted = permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
-    }
-    else {
+
+      // ✅ Notifications
+      bool notificationsGranted = false;
+      if (Platform.isIOS) {
+        var settings = await Permission.notification.request();
+        notificationsGranted = settings.isGranted;
+      } else if (Platform.isAndroid) {
+        // Optional: On Android, notifications are auto-granted pre-Android 13 (SDK 33)
+        // For Android 13+, request runtime notifications permission
+        var androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          var status = await Permission.notification.request();
+          notificationsGranted = status.isGranted;
+        } else {
+          notificationsGranted = true;
+        }
+      }
+
+      return locationGranted && notificationsGranted;
+    } else {
       // Only storage/photos
       bool storageGranted = false;
       if (Platform.isAndroid) {
@@ -37,10 +55,12 @@ Future<bool> checkAndRequestPermissions({required bool isDriver}) async {
           var status = await Permission.storage.request();
           storageGranted = status.isGranted;
         }
-      } else if (Platform.isIOS) {
-        var status = await Permission.photos.request();
-        storageGranted = status.isGranted;
       }
+      if (Platform.isIOS) {
+        var status = await Permission.photos.request();
+        storageGranted = status.isLimited || status.isGranted;
+      }
+
       return storageGranted;
     }
   } catch (e) {
@@ -258,4 +278,9 @@ class UpperCaseTextFormatter extends TextInputFormatter {
       selection: newValue.selection,
     );
   }
+}
+
+bool isDueSoonUI(DateTime dueDate) {
+  final diff = dueDate.difference(DateTime.now());
+  return diff.inDays <= 2 && diff.isNegative == false; // within 2 hours
 }

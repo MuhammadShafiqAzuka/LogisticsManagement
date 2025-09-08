@@ -240,9 +240,7 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
 
     final stocks = widget.job.stocks;
     final isStockLong = stocks.length > 1;
-    final jobUpdate = widget.job.status == 'active'
-        ? ref.watch(jobStatusProvider.select((map) => map[widget.job.id]))
-        : null;
+    final jobUpdate = ref.watch(jobStatusProvider.select((map) => map[widget.job.id]));
 
     return Scaffold(
       appBar: AppBar(
@@ -341,7 +339,7 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
             title: Text(widget.job.stocks),
           ),
 
-          if (widget.job.status == 'active') ...[
+          if (widget.job.status != 'finished') ...[
             const Divider(),
 
             if (widget.showNavigation)...[
@@ -403,55 +401,103 @@ class _JobMapPageState extends ConsumerState<JobMapPage> with TickerProviderStat
             ],
           ],
 
-          if(!widget.showNavigation)...[
-
-            if(widget.job.status == 'finished' && widget.isAdmin)...[
-              const SizedBox(height: 16),
-              const Divider(),
-              Text(
-                "Proof of Delivery",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              _buildProofImage(jobUpdate?.proofPhotoUrl ?? widget.job.proof?.proofPhoto, isLocal: widget.job.proof?.proofPhoto == null),
-              const SizedBox(height: 12),
-              Text(
-                "Proof of Signature",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              if (jobUpdate?.proofSignatureUrl != null)
-                Image.network(
-                  jobUpdate!.proofSignatureUrl!,
-                  height: 150,
+          if(widget.job.status == 'finished' && widget.isAdmin)...[
+            const SizedBox(height: 16),
+            const Divider(),
+            Text(
+              "Proof of Delivery",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            if (widget.job.proof!.proofPhoto != null)
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Image.network(
+                  widget.job.proof!.proofPhoto!,
                   fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset("assets/proof_signature.png", fit: BoxFit.cover);
+                  },
                 ),
-              if (widget.job.proof?.proofSignature != null)
-                Image.asset(widget.job.proof!.proofSignature!, height: 150, fit: BoxFit.cover),
-            ],
-
-            if ((widget.job.status == 'returned' || widget.job.status == 'pending') && widget.isAdmin) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              Text(
-                widget.job.status == 'returned'
-                    ? "Reason for Returning"
-                    : "Reason for Pending",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              const SizedBox(height: 8),
-              if (widget.job.proof?.proofReason != null)
-                Text(
-                  "Reason: ${widget.job.proof?.proofReason ?? 'No reason provided'}",
+            const SizedBox(height: 12),
+            Text(
+              "Proof of Signature",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            if (widget.job.proof!.proofSignature != null)
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              const SizedBox(height: 12),
-              if (widget.job.proof?.proofPhoto != null)
-                _buildProofImage(
-                  widget.job.proof?.proofPhoto,
-                  isLocal: widget.job.proof?.proofPhoto == null,
+                child: Image.network(
+                  widget.job.proof!.proofSignature!,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset("assets/proof_signature.png", fit: BoxFit.cover);
+                  },
                 ),
-            ],
-          ]
+              ),
+          ],
+
+          if ((widget.job.status == 'returned' || widget.job.status == 'pending') && widget.isAdmin) ...[
+            const SizedBox(height: 16),
+            Text(
+              widget.job.status == 'returned'
+                  ? "Reason for Returning"
+                  : "Reason for Pending",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            if (widget.job.proof?.proofReason != null)
+              Text(
+                "Reason: ${widget.job.proof?.proofReason ?? 'No reason provided'}",
+              ),
+            const SizedBox(height: 12),
+            if (widget.job.proof!.proofPhoto != null)
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Image.network(
+                  widget.job.proof!.proofPhoto!,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset("assets/proof_signature.png", fit: BoxFit.cover);
+                  },
+                ),
+              ),
+          ],
         ],
       ),
     );

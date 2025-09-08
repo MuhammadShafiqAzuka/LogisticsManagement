@@ -67,25 +67,7 @@ class _ImportJobPageState extends ConsumerState<ImportJobPage> {
   }
 
   Future<void> pickAndImportFile() async {
-    bool permissionGranted = await checkAndRequestPermissions(isDriver: false);
-    if (!permissionGranted) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Permission Required'),
-            content: const Text('Storage permission is needed to import job.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-      return;
-    }
+     await checkAndRequestPermissions(isDriver: false);
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -218,7 +200,7 @@ class _ImportJobPageState extends ConsumerState<ImportJobPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Order #${job.id}",
+                        "#${job.id}",
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -327,6 +309,13 @@ class _ImportJobPageState extends ConsumerState<ImportJobPage> {
                   ),
 
                   const Divider(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Storage Condition: ${job.stocks}"),
+                    ],
+                  ),
 
                   /// TIME & DRIVER
                   Row(

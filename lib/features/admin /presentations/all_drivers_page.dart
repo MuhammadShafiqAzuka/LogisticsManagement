@@ -63,7 +63,7 @@ class _AllDriversPageState extends ConsumerState<AllDriversPage> {
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundImage: (driver.profilePhoto != null && driver.profilePhoto!.isNotEmpty)
-                        ? FileImage(File(driver.profilePhoto!))
+                        ? NetworkImage(driver.profilePhoto!)
                         : const AssetImage('assets/default_driver.png'),
                   ),
                   title: Text(driver.email),
